@@ -1,50 +1,124 @@
-# Docker Services:
-#   up - Start services (use: make up [service...] or make up MODE=prod, ARGS="--build" for options)
-#   down - Stop services (use: make down [service...] or make down MODE=prod, ARGS="--volumes" for options)
-#   build - Build containers (use: make build [service...] or make build MODE=prod)
-#   logs - View logs (use: make logs [service] or make logs SERVICE=backend, MODE=prod for production)
-#   restart - Restart services (use: make restart [service...] or make restart MODE=prod)
-#   shell - Open shell in container (use: make shell [service] or make shell SERVICE=gateway, MODE=prod, default: backend)
-#   ps - Show running containers (use MODE=prod for production)
+# ============================================
+# CUET CSE Fest DevOps Hackathon - Makefile
+# ============================================
 #
-# Convenience Aliases (Development):
-#   dev-up - Alias: Start development environment
-#   dev-down - Alias: Stop development environment
-#   dev-build - Alias: Build development containers
-#   dev-logs - Alias: View development logs
-#   dev-restart - Alias: Restart development services
-#   dev-shell - Alias: Open shell in backend container
-#   dev-ps - Alias: Show running development containers
-#   backend-shell - Alias: Open shell in backend container
-#   gateway-shell - Alias: Open shell in gateway container
-#   mongo-shell - Open MongoDB shell
+# Quick Start Commands:
+#   make dev              - Start development environment
+#   make up               - Start production environment
+#   make down             - Stop all services
+#   make test-health      - Test gateway health
+#   make test-backend-check - Test backend via gateway
 #
-# Convenience Aliases (Production):
-#   prod-up - Alias: Start production environment
-#   prod-down - Alias: Stop production environment
-#   prod-build - Alias: Build production containers
-#   prod-logs - Alias: View production logs
-#   prod-restart - Alias: Restart production services
-#
-# Backend:
-#   backend-build - Build backend TypeScript
-#   backend-install - Install backend dependencies
-#   backend-type-check - Type check backend code
-#   backend-dev - Run backend in development mode (local, not Docker)
-#
-# Database:
-#   db-reset - Reset MongoDB database (WARNING: deletes all data)
-#   db-backup - Backup MongoDB database
-#
-# Cleanup:
-#   clean - Remove containers and networks (both dev and prod)
-#   clean-all - Remove containers, networks, volumes, and images
-#   clean-volumes - Remove all volumes
-#
-# Utilities:
-#   status - Alias for ps
-#   health - Check service health
-#
-# Help:
-#   help - Display this help message
+# All Available Commands:
+#   make help             - Show detailed command list
+
+# ============================================
+# Variables
+# ============================================
+MODE ?= prod
+ifeq ($(MODE),dev)
+	COMPOSE_FILE = docker/compose.development.yaml
+else
+	COMPOSE_FILE = docker/compose.production.yaml
+endif
+
+# ============================================
+# Hackathon Required Commands
+# ============================================
+.PHONY: dev
+dev:
+	@echo "🚀 Starting development environment..."
+	@sudo docker compose -f docker/compose.development.yaml up -d
+	@echo "✅ Development environment started!"
+
+.PHONY: up
+up:
+	@echo "🚀 Starting production environment..."
+	@sudo docker compose -f $(COMPOSE_FILE) up -d $(ARGS)
+	@echo "✅ Production environment started!"
+
+.PHONY: down
+down:
+	@echo "🛑 Stopping services..."
+	@sudo docker compose -f $(COMPOSE_FILE) down $(ARGS)
+	@echo "✅ Services stopped!"
+
+.PHONY: test-health
+test-health:
+	@echo "🏥 Testing Gateway health..."
+	@curl http://localhost:5921/health
+
+.PHONY: test-backend-check
+test-backend-check:
+	@echo "🏥 Testing Backend health via Gateway..."
+	@curl http://localhost:5921/api/health
+
+# ============================================
+# Docker Operations
+# ============================================
+.PHONY: build
+build:
+	@sudo docker compose -f $(COMPOSE_FILE) build $(ARGS)
+
+.PHONY: logs
+logs:
+	@sudo docker compose -f $(COMPOSE_FILE) logs -f $(SERVICE)
+
+.PHONY: ps
+ps:
+	@sudo docker compose -f $(COMPOSE_FILE) ps
+
+.PHONY: restart
+restart:
+	@sudo docker compose -f $(COMPOSE_FILE) restart $(SERVICE)
+
+# ============================================
+# Cleanup Commands
+# ============================================
+.PHONY: clean
+clean:
+	@echo "🧹 Cleaning up containers and networks..."
+	@sudo docker compose -f docker/compose.development.yaml down 2>/dev/null || true
+	@sudo docker compose -f docker/compose.production.yaml down 2>/dev/null || true
+	@echo "✅ Cleanup complete!"
+
+.PHONY: clean-all
+clean-all:
+	@echo "🧹 Removing all containers, networks, volumes, and images..."
+	@sudo docker compose -f docker/compose.development.yaml down -v --rmi all 2>/dev/null || true
+	@sudo docker compose -f docker/compose.production.yaml down -v --rmi all 2>/dev/null || true
+	@echo "✅ Deep cleanup complete!"
+
+# ============================================
+# Help
+# ============================================
+.PHONY: help
+help:
+	@echo ""
+	@echo "╔════════════════════════════════════════════════════════════╗"
+	@echo "║   CUET CSE Fest DevOps Hackathon - Makefile Commands      ║"
+	@echo "╚════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "📋 Essential Commands:"
+	@echo "  make dev                 - Start development environment"
+	@echo "  make up                  - Start production environment"
+	@echo "  make down                - Stop all services"
+	@echo "  make test-health         - Test gateway health endpoint"
+	@echo "  make test-backend-check  - Test backend via gateway"
+	@echo ""
+	@echo "🔧 Docker Operations:"
+	@echo "  make build               - Build Docker images"
+	@echo "  make logs                - View service logs (add SERVICE=name)"
+	@echo "  make ps                  - Show running containers"
+	@echo "  make restart             - Restart services"
+	@echo ""
+	@echo "🧹 Cleanup:"
+	@echo "  make clean               - Remove containers and networks"
+	@echo "  make clean-all           - Remove everything (containers, volumes, images)"
+	@echo ""
+	@echo "💡 Examples:"
+	@echo "  make up MODE=prod        - Start production explicitly"
+	@echo "  make logs SERVICE=gateway - View gateway logs"
+	@echo "  make build ARGS='--no-cache' - Build without cache"
+	@echo ""
 
