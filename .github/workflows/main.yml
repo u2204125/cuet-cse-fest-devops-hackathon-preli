@@ -106,12 +106,12 @@ jobs:
       # ============================================
       # Step 5: Deployment
       # ============================================
-      - name: Trigger Render Deployment
-        run: |
-          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+      # - name: Trigger Render Deployment
+      #   run: |
+      #     curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
 
-      - name: Wait for Deployment
-        run: sleep 30
+      # - name: Wait for Deployment
+      #   run: sleep 30
 
       # ============================================
       # Step 6: Integration Testing
