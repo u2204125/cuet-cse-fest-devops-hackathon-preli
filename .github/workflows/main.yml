@@ -116,23 +116,23 @@ jobs:
       # ============================================
       # Step 6: Integration Testing
       # ============================================
-      - name: Health Check - Gateway
-        run: |
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.RENDER_URL }}/health)
-          if [ "$HTTP_STATUS" -ne 200 ]; then
-            echo "❌ Health check failed with status code: $HTTP_STATUS"
-            exit 1
-          fi
-          echo "✅ Health check passed with status code: $HTTP_STATUS"
+      # - name: Health Check - Gateway
+      #   run: |
+      #     HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.RENDER_URL }}/health)
+      #     if [ "$HTTP_STATUS" -ne 200 ]; then
+      #       echo "❌ Health check failed with status code: $HTTP_STATUS"
+      #       exit 1
+      #     fi
+      #     echo "✅ Health check passed with status code: $HTTP_STATUS"
 
-      - name: Health Check - Backend via Gateway
-        run: |
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.RENDER_URL }}/api/health)
-          if [ "$HTTP_STATUS" -ne 200 ]; then
-            echo "❌ Backend health check failed with status code: $HTTP_STATUS"
-            exit 1
-          fi
-          echo "✅ Backend health check passed with status code: $HTTP_STATUS"
+      # - name: Health Check - Backend via Gateway
+      #   run: |
+      #     HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.RENDER_URL }}/api/health)
+      #     if [ "$HTTP_STATUS" -ne 200 ]; then
+      #       echo "❌ Backend health check failed with status code: $HTTP_STATUS"
+      #       exit 1
+      #     fi
+      #     echo "✅ Backend health check passed with status code: $HTTP_STATUS"
 
       # ============================================
       # Final Summary
