@@ -48,3 +48,158 @@
 # Help:
 #   help - Display this help message
 
+# Variables
+MODE ?= dev
+ifeq ($(MODE),dev)
+	COMPOSE_FILE = docker/compose.development.yaml
+else
+	COMPOSE_FILE = docker/compose.production.yaml
+endif
+
+# Docker Compose Commands
+.PHONY: up
+up:
+	sudo docker compose -f $(COMPOSE_FILE) up -d $(ARGS)
+
+.PHONY: down
+down:
+	sudo docker compose -f $(COMPOSE_FILE) down $(ARGS)
+
+.PHONY: build
+build:
+	sudo docker compose -f $(COMPOSE_FILE) build $(ARGS)
+
+.PHONY: logs
+logs:
+	sudo docker compose -f $(COMPOSE_FILE) logs -f $(SERVICE)
+
+.PHONY: restart
+restart:
+	sudo docker compose -f $(COMPOSE_FILE) restart $(SERVICE)
+
+.PHONY: shell
+shell:
+	sudo docker compose -f $(COMPOSE_FILE) exec $(or $(SERVICE),backend) sh
+
+.PHONY: ps
+ps:
+	sudo docker compose -f $(COMPOSE_FILE) ps
+
+# Development Aliases
+.PHONY: dev-up
+dev-up:
+	$(MAKE) up MODE=dev
+
+.PHONY: dev-down
+dev-down:
+	$(MAKE) down MODE=dev
+
+.PHONY: dev-build
+dev-build:
+	$(MAKE) build MODE=dev
+
+.PHONY: dev-logs
+dev-logs:
+	$(MAKE) logs MODE=dev
+
+.PHONY: dev-restart
+dev-restart:
+	$(MAKE) restart MODE=dev
+
+.PHONY: dev-shell
+dev-shell:
+	$(MAKE) shell MODE=dev
+
+.PHONY: dev-ps
+dev-ps:
+	$(MAKE) ps MODE=dev
+
+.PHONY: backend-shell
+backend-shell:
+	$(MAKE) shell SERVICE=backend
+
+.PHONY: gateway-shell
+gateway-shell:
+	$(MAKE) shell SERVICE=gateway
+
+.PHONY: mongo-shell
+mongo-shell:
+	sudo docker compose -f $(COMPOSE_FILE) exec mongodb mongosh -u admin -p admin123
+
+# Production Aliases
+.PHONY: prod-up
+prod-up:
+	$(MAKE) up MODE=prod
+
+.PHONY: prod-down
+prod-down:
+	$(MAKE) down MODE=prod
+
+.PHONY: prod-build
+prod-build:
+	$(MAKE) build MODE=prod
+
+.PHONY: prod-logs
+prod-logs:
+	$(MAKE) logs MODE=prod
+
+.PHONY: prod-restart
+prod-restart:
+	$(MAKE) restart MODE=prod
+
+# Backend Commands
+.PHONY: backend-build
+backend-build:
+	cd backend && npm run build
+
+.PHONY: backend-install
+backend-install:
+	cd backend && npm install
+
+.PHONY: backend-type-check
+backend-type-check:
+	cd backend && npm run type-check
+
+.PHONY: backend-dev
+backend-dev:
+	cd backend && npm run dev
+
+# Database Commands
+.PHONY: db-reset
+db-reset:
+	sudo docker compose -f $(COMPOSE_FILE) exec mongodb mongosh -u admin -p admin123 --eval "db.dropDatabase()"
+
+.PHONY: db-backup
+db-backup:
+	sudo docker compose -f $(COMPOSE_FILE) exec mongodb mongodump --out=/data/backup
+
+# Cleanup Commands
+.PHONY: clean
+clean:
+	sudo docker compose -f docker/compose.development.yaml down
+	sudo docker compose -f docker/compose.production.yaml down
+
+.PHONY: clean-all
+clean-all:
+	$(MAKE) clean
+	sudo docker compose -f docker/compose.development.yaml down -v --rmi all
+	sudo docker compose -f docker/compose.production.yaml down -v --rmi all
+
+.PHONY: clean-volumes
+clean-volumes:
+	sudo docker volume rm mongo_data mongo_data_dev 2>/dev/null || true
+
+# Utilities
+.PHONY: status
+status:
+	$(MAKE) ps
+
+.PHONY: health
+health:
+	@echo "Checking service health..."
+	@curl -s http://localhost:5921/health || echo "Gateway not responding"
+
+.PHONY: help
+help:
+	@echo "Please refer to the comments at the top of this Makefile for available commands"
+

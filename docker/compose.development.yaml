@@ -1,6 +1,56 @@
-# services:
-  # backend:
+services:
+  mongodb:
+    image: mongo:4.4
+    container_name: mongodb-dev
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    volumes:
+      - mongo_data_dev:/data/db
+    networks:
+      - app-network-dev
+    restart: unless-stopped
 
-  # gateway:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.dev
+    container_name: backend-dev
+    environment:
+      BACKEND_PORT: 3847
+      MONGO_URI: mongodb://admin:admin123@mongodb:27017
+      MONGO_DATABASE: ecommerce
+    volumes:
+      - ../backend:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+    networks:
+      - app-network-dev
+    restart: unless-stopped
 
-  # mongo:
+  gateway:
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile.dev
+    container_name: gateway-dev
+    environment:
+      GATEWAY_PORT: 5921
+      BACKEND_URL: http://backend:3847
+    ports:
+      - "5921:5921"
+    volumes:
+      - ../gateway:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - app-network-dev
+    restart: unless-stopped
+
+networks:
+  app-network-dev:
+    driver: bridge
+
+volumes:
+  mongo_data_dev:
